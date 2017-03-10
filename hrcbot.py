@@ -35,7 +35,7 @@ class HRCBot:
         self.db = self.get_db(db)
         date_regex = r'((?:Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov) (?:[0-9]|[12][0-9]|3[01]), (?:[0-9]{4}), (?:[0-9]{1,2}:[0-5][0-9]) (?:AM|PM))'
         record_regex = r'\(([0-9]+-[0-9]+)\)'
-        team_regex = r'((?:[A-Z][a-z]+ ?)+ [A-Z][a-z]+)'
+        team_regex = r'((?:[A-Z.][a-z.]+ ?)+ [A-Z][a-z]+)'
         gameday_regex = ('{team} {record} @ {team} {record} - {game_date}')
         self.gameday_thread_regex = gameday_regex.format(team=team_regex, record=record_regex, game_date=date_regex)
         self.threshold = datetime.timedelta(minutes=10)
@@ -255,14 +255,16 @@ class HRCBot:
                                 collection.insert(winner)
 
                             correct_hrc = collection.find(winner['author']).count()
-                            # reply to post and store hrc['_id'] in database of replied posts.
-                            # Look up number of correct calls and add to post.
+                            # Look up number of correct calls and add to string
                             winner_str = '%s correctly predicted the %s home run!' % (hrc['author'], homerun_hitter[1])
                             if correct_hrc > 1:
                                 winner_str = '%s\n\n%s now has %s correct predictions this season.' % (winner_str, hrc['author'], str(correct_hrc))
                             elif correct_hrc == 1:
                                 winner_str = '%s\n\nThis is %s\'s first correct prediction this season.' % (winner_str, hrc['author'])
+                            # Print winner string and make a reply to the comment.
                             print winner_str
+                            comment = praw.models.Comment(self.reddit, id=hrc['_id'])
+                            comment.reply(winner_str)
                             logging.debug('\t\t%s' % winner_str)
                             logging.debug('\t\tHR: %s, %s' % (hr['event_start'], homerun_hitter))
                             logging.debug('\t\tHR with TV Delay: %s, %s' % (hr_w_tv_delay, homerun_hitter))
