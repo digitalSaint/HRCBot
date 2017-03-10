@@ -301,6 +301,8 @@ class HRCBot:
     def main(self, subreddit=None):
 #        game_date = dateutil.parser.parse('Aug 11, 2016 12:10 PM') #Sep 21, 2016 2:35 PM') #Oct 2, 2016, 2:05 PM')
 #        game_date = dateutil.parser.parse('20160921')
+        logged_in = 'Logged in as: %s' % self.reddit.user.me()
+        logging.debug(logged_in)
         game_date = datetime.datetime.today()
         logging.debug(game_date)
         threads = self.getGameDayThread(game_date.strftime('%Y%m%d')) #'201610021405'
