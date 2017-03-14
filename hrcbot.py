@@ -146,7 +146,7 @@ class HRCBot:
         """ This function returns a list of home runs for a give date """
         # http://gd2.mlb.com/components/game/mlb/year_2016/month_09/day_21/gid_2016_09_21_houmlb_oakmlb_1/atv_runScoringPlays.xml
         collection = self.db[col_name]
-        homerun_hitter_regex = r'(^(?:[A-Z.] ?[A-Za-z.]+ ?)+)(?: homers)' # Finds proper names
+        homerun_hitter_regex = r'(^(?:[A-Z.] ?[A-Za-z.]+ ?)+)(?: homers|hits a grand slam)' # Finds proper names
         parsed_date = dateutil.parser.parse(date)
         year = self.pad(parsed_date.year)
         month = self.pad(parsed_date.month)
