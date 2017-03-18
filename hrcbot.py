@@ -215,9 +215,10 @@ class HRCBot:
 
     def compareNames(self, nicknames, hrc):
         """ This function compares home run calls with possible nicknames """
-        regex = re.compile(r'^[Hh][Rr][Cc]:?.*\b(?:%s)\b.*' % '|'.join(nicknames))
+        regex = re.compile(r'^[Hh][Rr][Cc]:?.*\b(?:%s)\b.*' % '|'.join(nicknames), re.IGNORECASE)
         hrc = hrc.title() #lower()
         matches = re.search(regex, hrc)
+        
         if matches:
             return True
         return False
@@ -251,24 +252,28 @@ class HRCBot:
                             winner = hrc
                             this_hr = self.db['hr'].find_one(hr) # note: this should be changed
                             winner['hr_id'] = this_hr['_id']
+                            winner['replied'] = False 
                             if not collection.find_one({'_id': hrc['_id']}):
                                 collection.insert(winner)
 
-                            correct_hrc = collection.find(winner['author']).count()
-                            # Look up number of correct calls and add to string
-                            winner_str = '%s correctly predicted the %s home run!' % (hrc['author'], homerun_hitter[1])
-                            if correct_hrc > 1:
-                                winner_str = '%s\n\n%s now has %s correct predictions this season.' % (winner_str, hrc['author'], str(correct_hrc))
-                            elif correct_hrc == 1:
-                                winner_str = '%s\n\nThis is %s\'s first correct prediction this season.' % (winner_str, hrc['author'])
-                            # Print winner string and make a reply to the comment.
-                            print winner_str
-                            comment = praw.models.Comment(self.reddit, id=hrc['_id'])
-                            comment.reply(winner_str)
-                            logging.debug('\t\t%s' % winner_str)
-                            logging.debug('\t\tHR: %s, %s' % (hr['event_start'], homerun_hitter))
-                            logging.debug('\t\tHR with TV Delay: %s, %s' % (hr_w_tv_delay, homerun_hitter))
-                            logging.debug('\t\tHRC: %s, %s' % (timestamp, hrc['body']))
+                                correct_hrc = collection.find({'author': winner['author']}).count()
+                                # Look up number of correct calls and add to string
+                                winner_str = '%s correctly predicted the %s home run!' % (hrc['author'], homerun_hitter[1])
+                                if correct_hrc > 1:
+                                    winner_str = '%s\n\n%s now has %s correct predictions this season.' % (winner_str, hrc['author'], str(correct_hrc))
+                                elif correct_hrc == 1:
+                                    winner_str = '%s\n\nThis is %s\'s first correct prediction this season.' % (winner_str, hrc['author'])
+                                # Print winner string and make a reply to the comment.
+                                if winner['replied'] == False:
+                                    print winner_str
+                                    comment = praw.models.Comment(self.reddit, id=hrc['_id'])
+                                    comment.reply(winner_str)
+                                    collection.update_one({'_id': hrc['_id']}, {'replied': True})
+                                    collection.upsert(winner)
+                                logging.debug('\t\t%s' % winner_str)
+                                logging.debug('\t\tHR: %s, %s' % (hr['event_start'], homerun_hitter))
+                                logging.debug('\t\tHR with TV Delay: %s, %s' % (hr_w_tv_delay, homerun_hitter))
+                                logging.debug('\t\tHRC: %s, %s' % (timestamp, hrc['body']))
                         else:
                             logging.debug('\tThe HRC happened outside the threshold of the event.')
                             logging.debug('\t\tHR: %s, %s' % (hr['event_start'], homerun_hitter))
